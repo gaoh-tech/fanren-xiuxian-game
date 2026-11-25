@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>凡人修仙传 · 凡人之路</title>
+<style>
+  :root {
+    --bg: #f5f1e8;
+    --panel: #fffdf7;
+    --ink: #3a3226;
+    --ink-light: #7a705e;
+    --accent: #8b2f2f;
+    --accent2: #4a6b3a;
+    --gold: #b08d2f;
+    --border: #d8cfba;
+    --shadow: rgba(90, 70, 40, 0.15);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image: radial-gradient(circle at 20% 10%, rgba(176,141,47,0.06), transparent 40%),
+                      radial-gradient(circle at 80% 90%, rgba(139,47,47,0.05), transparent 40%);
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  h1.title {
+    text-align: center; font-size: 26px; letter-spacing: 6px;
+    color: var(--accent); padding: 14px 0 4px; font-weight: 700;
+  }
+  .subtitle { text-align: center; color: var(--ink-light); font-size: 13px; margin-bottom: 14px; letter-spacing: 2px; }
+
+  /* ---------- 开局界面 ---------- */
+  #screen-create { max-width: 560px; margin: 40px auto; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: 0 4px 16px var(--shadow); padding: 24px;
+  }
+  .card h2 { color: var(--accent); margin-bottom: 12px; font-size: 18px; letter-spacing: 2px; }
+  .field { margin: 14px 0; }
+  .field label { display: block; font-size: 13px; color: var(--ink-light); margin-bottom: 6px; }
+  .field input[type=text] {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 15px; background: #fff; color: var(--ink);
+  }
+  .linggen-box {
+    border: 1px dashed var(--border); border-radius: 10px; padding: 14px;
+    text-align: center; background: rgba(176,141,47,0.05);
+  }
+  .linggen-name { font-size: 20px; font-weight: bold; margin-bottom: 6px; }
+  .linggen-desc { font-size: 13px; color: var(--ink-light); }
+  .btn {
+    display: inline-block; border: none; cursor: pointer; border-radius: 8px;
+    padding: 10px 20px; font-size: 14px; letter-spacing: 2px; transition: all .15s;
+    background: var(--accent); color: #fff;
+  }
+  .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn.secondary { background: var(--accent2); }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  /* ---------- 主界面 ---------- */
+  #screen-game { display: none; }
+  .grid { display: grid; grid-template-columns: 280px 1fr 280px; gap: 14px; align-items: start; }
+  @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 3px 10px var(--shadow); padding: 16px; margin-bottom: 14px;
+  }
+  .panel h3 {
+    font-size: 14px; color: var(--accent); letter-spacing: 3px; margin-bottom: 10px;
+    border-bottom: 1px solid var(--border); padding-bottom: 8px;
+  }
+  .stat-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+  .stat-row .v { color: var(--ink); font-weight: 600; }
+  .bar { height: 10px; background: #e8e0cd; border-radius: 6px; overflow: hidden; margin: 4px 0 10px; }
+  .bar > div { height: 100%; border-radius: 6px; transition: width .3s; }
+  .bar .hp { background: #c04a3a; }
+  .bar .mp { background: #3a6bc0; }
+  .bar .exp { background: var(--gold); }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .actions .btn { width: 100%; padding: 12px 8px; }
+
+  #log {
+    height: 420px; overflow-y: auto; background: #fffef9; border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; font-size: 13.5px; line-height: 1.8;
+  }
+  #log p { margin-bottom: 6px; }
+  .l-sys   { color: var(--accent); font-weight: bold; }
+  .l-combat{ color: #a0522d; }
+  .l-good  { color: var(--accent2); }
+  .l-bad   { color: #b03030; }
+  .l-treasure { color: var(--gold); font-weight: 600; }
+
+  .inv-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 8px; border-bottom: 1px dashed var(--border); font-size: 13px;
+  }
+  .inv-item .use-btn { font-size: 12px; padding: 3px 10px; border-radius: 6px; }
+  .tip { font-size: 12px; color: var(--ink-light); margin-top: 8px; line-height: 1.6; }
+
+  /* ---------- 战斗 ---------- */
+  #battle {
+    display: none; position: fixed; inset: 0; background: rgba(40,30,20,0.55);
+    z-index: 100; align-items: center; justify-content: center;
+  }
+  #battle .bcard {
+    width: min(640px, 92vw); background: var(--panel); border-radius: 14px;
+    border: 1px solid var(--border); padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  }
+  .fighter { display: flex; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+  .fighter .fbox { flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: #fff; }
+  .fighter .fname { font-weight: bold; margin-bottom: 6px; }
+  .bactions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+  .bactions .btn { padding: 10px 4px; font-size: 13px; }
+  #blog { height: 130px; overflow-y: auto; background: #fffef9; border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px; font-size: 13px; line-height: 1.7; margin-bottom: 4px; }
+
+  .realm-banner {
+    text-align:center; padding: 8px; background: linear-gradient(90deg, rgba(139,47,47,0.08), rgba(176,141,47,0.10), rgba(139,47,47,0.08));
+    border-radius: 10px; margin-bottom: 12px; font-size: 15px; letter-spacing: 2px; color: var(--accent); font-weight: bold;
+  }
+  .save-bar { display:flex; justify-content: center; gap: 10px; margin-top: 6px; }
+  .save-bar .btn { font-size: 12px; padding: 6px 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="title">凡人修仙传 · 凡人之路</h1>
+  <p class="subtitle">—— 一个凡人的修仙之旅，炼丹炼器、宗门历练、血色禁地，步步为营 ——</p>
+
+  <!-- 开局 -->
+  <div id="screen-create">
+    <div class="card">
+      <h2>踏入仙途</h2>
+      <div class="field">
+        <label>道号 / 姓名</label>
+        <input type="text" id="inp-name" value="韩立" maxlength="8">
+      </div>
+      <div class="field">
+        <label>灵根资质（天生注定，可重新问命，但有次数限制）</label>
+        <div class="linggen-box">
+          <div class="linggen-name" id="lg-name">？</div>
+          <div class="linggen-desc" id="lg-desc">点击下方按钮，向苍天问命</div>
+        </div>
+        <div style="text-align:center; margin-top:10px;">
+          <button class="btn ghost" id="btn-reroll">问命（剩余 3 次）</button>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:16px;">
+        <button class="btn" id="btn-start" disabled>踏上仙途</button>
+      </div>
+      <div style="margin-top:16px; padding-top:12px; border-top:1px dashed var(--border); font-size:13px;">
+        <div id="cloud-status-create"></div>
+        <div style="margin-top:8px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+          <button class="btn ghost" id="btn-login-create">☁️ 使用 WorkBuddy 登录（云端存档）</button>
+          <button class="btn ghost" id="btn-cloud-restore-create" style="display:none">📖 恢复云端存档</button>
+        </div>
+      </div>
+      <p class="tip">提示：四灵根、五灵根资质驳杂，修炼缓慢，但正如韩立所言——"资质差，未必不能成仙"。灵根越差，越考验你的经营与胆识。</p>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="screen-game">
+    <div class="realm-banner" id="realm-banner"></div>
+    <div class="grid">
+      <!-- 左：角色 -->
+      <div>
+        <div class="panel">
+          <h3>道体</h3>
+          <div class="stat-row"><span>姓名</span><span class="v" id="st-name"></span></div>
+          <div class="stat-row"><span>境界</span><span class="v" id="st-realm"></span></div>
+          <div class="stat-row"><span>灵根</span><span class="v" id="st-lg"></span></div>
+          <div style="font-size:12px;color:var(--ink-light);margin-top:6px;">气血</div>
+          <div class="bar"><div class="hp" id="bar-hp" style="width:100%"></div></div>
+          <div class="stat-row"><span id="st-hp" style="font-size:12px;color:var(--ink-light)"></span><span></span></div>
+          <div style="font-size:12px;color:var(--ink-light);">法力</div>
+          <div class="bar"><div class="mp" id="bar-mp" style="width:100%"></div></div>
+          <div class="stat-row"><span id="st-mp" style="font-size:12px;color:var(--ink-light)"></span><span></span></div>
+          <div style="font-size:12px;color:var(--ink-light);">修为</div>
+          <div class="bar"><div class="exp" id="bar-exp" style="width:0%"></div></div>
+          <div class="stat-row"><span id="st-exp" style="font-size:12px;color:var(--ink-light)"></span><span></span></div>
+          <div class="stat-row"><span>攻击</span><span class="v" id="st-atk"></span></div>
+          <div class="stat-row"><span>防御</span><span class="v" id="st-def"></span></div>
+          <div class="stat-row"><span>神识</span><span class="v" id="st-spirit"></span></div>
+          <div class="stat-row"><span>灵石</span><span class="v" id="st-stones" style="color:var(--gold)"></span></div>
+        </div>
+        <div class="panel">
+          <h3>功法 · 法器</h3>
+          <div id="gongfa-list"></div>
+        </div>
+        <div class="panel">
+          <h3>杂艺 · 宗门</h3>
+          <div class="stat-row"><span>炼丹术</span><span class="v" id="st-alc"></span></div>
+          <div class="stat-row"><span>炼器术</span><span class="v" id="st-craft"></span></div>
+          <div class="stat-row"><span>宗门</span><span class="v" id="st-sect"></span></div>
+          <div class="stat-row"><span>贡献点</span><span class="v" id="st-contrib" style="color:var(--gold)"></span></div>
+        </div>
+        <div class="panel" id="panel-beast" style="display:none">
+          <h3>灵兽袋</h3>
+          <div class="stat-row"><span>灵兽</span><span class="v" id="st-beast"></span></div>
+          <div class="stat-row"><span>等级</span><span class="v" id="st-beastlv"></span></div>
+          <div class="stat-row"><span>斗法辅攻</span><span class="v" id="st-beastdmg"></span></div>
+          <p class="tip">噬金虫嗜金如命，可喂食灵石与金属矿料成长；斗法时每回合噬咬敌人。结丹期解锁。</p>
+        </div>
+      </div>
+
+      <!-- 中：行动与日志 -->
+      <div>
+        <div class="panel">
+          <h3>行动</h3>
+          <div class="actions">
+            <button class="btn" id="act-meditate">🧘 打坐修炼</button>
+            <button class="btn secondary" id="act-seclusion">⛰️ 闭关（修炼十日）</button>
+            <button class="btn ghost" id="act-explore">🗡️ 出外历练</button>
+            <button class="btn ghost" id="act-market">🏪 坊市</button>
+            <button class="btn ghost" id="act-alchemy">⚗️ 炼丹炉</button>
+            <button class="btn ghost" id="act-forge">🔨 炼器坊</button>
+            <button class="btn ghost" id="act-sect">🏯 宗门</button>
+            <button class="btn ghost" id="act-dungeon">🩸 血色禁地</button>
+            <button class="btn ghost" id="act-beast">🐜 灵兽袋</button>
+            <button class="btn ghost" id="act-breakthrough" disabled>✨ 冲击瓶颈</button>
+          </div>
+          <p class="tip" id="breakthrough-tip"></p>
+        </div>
+        <div class="panel">
+          <h3>历练地图</h3>
+          <div class="stat-row"><span>所在</span><span class="v" id="cmd-loc">荒山野岭</span></div>
+          <p class="tip" id="area-desc" style="min-height:3em;"></p>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; max-width:230px; margin:0 auto;">
+            <span></span><button class="btn ghost" id="mv-n" style="padding:6px 4px;">⬆ 北</button><span></span>
+            <button class="btn ghost" id="mv-w" style="padding:6px 4px;">⬅ 西</button>
+            <button class="btn ghost" id="mv-stay" style="padding:6px 4px;">◎ 搜寻</button>
+            <button class="btn ghost" id="mv-e" style="padding:6px 4px;">东 ➡</button>
+            <span></span><button class="btn ghost" id="mv-s" style="padding:6px 4px;">⬇ 南</button><span></span>
+          </div>
+          <p class="tip">点方向键移动即历练：每走一步都可能遭遇妖兽、采集灵草矿料或触发奇遇；「搜寻」在原地探索一步。坊市在【青牛镇】，宗门、血色禁地在上方行动按钮中。</p>
+        </div>
+        <div class="panel">
+          <h3>见闻录</h3>
+          <div id="log"></div>
+        </div>
+      </div>
+
+      <!-- 右：储物袋 -->
+      <div>
+        <div class="panel">
+          <h3>储物袋</h3>
+          <div id="inv-list"></div>
+          <p class="tip">丹药点击即可服用；灵草矿料是炼丹炼器的材料，多余可售。</p>
+        </div>
+        <div class="panel">
+          <h3>云端存档</h3>
+          <div id="cloud-status-game" style="font-size:12.5px; line-height:1.7;"></div>
+          <div class="save-bar">
+            <button class="btn ghost" id="btn-cloud-sync">☁️ 立即同步</button>
+            <button class="btn ghost" id="btn-cloud-restore">📖 从云端恢复</button>
+            <button class="btn ghost" id="btn-cloud-logout">退出登录</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>存档</h3>
+          <div class="save-bar">
+            <button class="btn secondary" id="btn-save">保存进度</button>
+            <button class="btn ghost" id="btn-load">读取存档</button>
+            <button class="btn ghost" id="btn-restart">重开仙途</button>
+          </div>
+          <p class="tip">每次行动后会自动存档于本机浏览器中，重开仙途将清空存档。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 战斗界面 -->
+<div id="battle">
+  <div class="bcard">
+    <h2 style="color:var(--accent);text-align:center;letter-spacing:4px;margin-bottom:14px;">斗 法</h2>
+    <div class="fighter">
+      <div class="fbox">
+        <div class="fname" id="b-pname"></div>
+        <div class="bar"><div class="hp" id="b-php" style="width:100%"></div></div>
+        <div class="stat-row"><span id="b-phpnum" style="font-size:12px"></span><span style="font-size:12px">攻 <span id="b-patk"></span></span></div>
+      </div>
+      <div class="fbox">
+        <div class="fname" id="b-ename" style="color:#a0522d"></div>
+        <div class="bar"><div class="hp" id="b-ehp" style="width:100%"></div></div>
+        <div class="stat-row"><span id="b-ehpnum" style="font-size:12px"></span><span style="font-size:12px">攻 <span id="b-eatk"></span></span></div>
+      </div>
+    </div>
+    <div id="blog"></div>
+    <div class="bactions">
+      <button class="btn" id="b-atk">普通攻击</button>
+      <button class="btn secondary" id="b-spell">御剑术 (8法力)</button>
+      <button class="btn ghost" id="b-pill">服丹</button>
+      <button class="btn ghost" id="b-flee">遁走</button>
+    </div>
+    <div id="b-pill-list" style="margin-top:10px;display:none;"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script>
+"use strict";
+/* ===================== 数据定义 ===================== */
+const LINGGENS = [
+  { name:"天灵根（金）",   mult:2.2, desc:"万中无一的天纵奇才，修炼一日千里。", weight:2 },
+  { name:"异灵根（雷）",   mult:2.0, desc:"罕见异种灵根，雷法之力远胜常人。", weight:4 },
+  { name:"双灵根",        mult:1.6, desc:"资质上佳，宗门争抢的好苗子。", weight:14 },
+  { name:"三灵根",        mult:1.2, desc:"中规中矩，勤能补拙。", weight:28 },
+  { name:"四灵根",        mult:0.9, desc:"伪灵根也，修炼事倍功半。然韩立亦是四灵根……", weight:34 },
+  { name:"五灵根",        mult:0.65, desc:"五行俱全，驳杂不堪。仙路渺茫，唯有奇遇可期。", weight:18 },
+];
+const REALMS = [
+  { name:"炼气期", layers:13, mult:1,   layerFmt:n=>"第"+cn(n)+"层" },
+  { name:"筑基期", layers:3,  mult:9,   layerFmt:n=>["初期","中期","后期"][n-1] },
+  { name:"结丹期", layers:3,  mult:45,  layerFmt:n=>["初期","中期","后期"][n-1] },
+  { name:"元婴期", layers:3,  mult:220, layerFmt:n=>["初期","中期","后期"][n-1] },
+  { name:"化神期", layers:3,  mult:1000,layerFmt:n=>["初期","中期","后期"][n-1] },
+];
+const BREAK_PILL = { 1:"筑基丹", 2:"凝金丹", 3:"婴变丹", 4:"化神丹" }; // 大境界突破丹
+function cn(n){ return ["零","一","二","三","四","五","六","七","八","九","十","十一","十二","十三"][n] || n; }
+
+// 功法
+const GONGFA = {
+  changchun: { name:"长春功", desc:"木属性吐纳法门，修炼时气血自生。", price:0, effect:{hpRegen:0.05, expMult:1.0} },
+  qingyuan:  { name:"青元剑诀", desc:"黄枫谷剑修法门，剑气凌厉。", price:800, effect:{atkMult:1.35, expMult:1.05} },
+  dayan:     { name:"大衍诀", desc:"千竹教神识秘术，神识倍增，斗法占尽先机。", price:1500, effect:{spiritMult:1.8, critAdd:0.10} },
+  xuanni:    { name:"玄阴经", desc:"魔道奇书，威力绝伦，修炼有反噬之险。", price:4000, effect:{atkMult:1.6, expMult:1.15, hpPenalty:0.1} },
+  dacheng:   { name:"青元剑诀·大成", desc:"剑诀大成，御剑万里取人首级。", price:9000, effect:{atkMult:1.9, expMult:1.1} },
+};
+// 法器
+const FQI = {
+  none:    { name:"无", price:0, atk:0 },
+  wufeng:  { name:"乌锋剑", price:300, atk:8, desc:"凡铁利器，聊胜于无。" },
+  huoyun:  { name:"火蟒剑", price:1200, atk:20, desc:"附火性灵器，中阶修士爱用。" },
+  qingzhu: { name:"青竹蜂云剑", price:5000, atk:45, desc:"金雷竹炼制，削铁如泥。" },
+  feijian: { name:"三焰扇", price:15000, atk:100, desc:"仿制古宝，三焰齐发。" },
+};
+// 丹药
+const PILLS = {
+  juqi:    { name:"聚气丹", price:60,  desc:"服之增加修为。", sell:20 },
+  huichun: { name:"回春丹", price:80,  desc:"斗法中恢复气血。", sell:25, battle:true },
+  huyuan:  { name:"护元丹", price:150, desc:"斗法中恢复法力。", sell:45, battle:true },
+  zhujidan:{ name:"筑基丹", price:3000,desc:"冲击筑基期的必需丹药。", sell:800 },
+  ningjin: { name:"凝金丹", price:12000,desc:"辅助凝结金丹。", sell:3000 },
+  yingbian:{ name:"婴变丹", price:40000,desc:"元婴孕育之基。", sell:10000 },
+  huashen: { name:"化神丹", price:120000,desc:"窥探化神之门。", sell:30000 },
+};
+// 灵草（历练获得，炼丹材料，可卖）
+const HERBS = {
+  lingcao:  { name:"百年灵草", sell:100 },
+  xuannie:  { name:"血凝花", sell:350 },
+  huanglong:{ name:"黄龙芝", sell:900 },
+  qiansui:  { name:"千年灵药", sell:4000 },
+};
+// 矿料（历练/副本获得，炼器材料，可卖）
+const ORES = {
+  jingtie:  { name:"精铁", sell:60 },
+  xuantie:  { name:"玄铁", sell:300 },
+  jingjing: { name:"金精", sell:1200 },
+  jinleizhu:{ name:"金雷竹", sell:5000 },
+};
+const MATS = Object.assign({}, HERBS, ORES);
+// 炼丹方（基础四方天生掌握，其余在宗门贡献阁兑换）
+const DAN_RECIPES = {
+  juqi:    { name:"聚气丹", mats:{lingcao:2},            base:0.90, diff:10 },
+  huichun: { name:"回春丹", mats:{lingcao:1,xuannie:1},  base:0.85, diff:15 },
+  huyuan:  { name:"护元丹", mats:{xuannie:2},            base:0.80, diff:18 },
+  zhujidan:{ name:"筑基丹", mats:{xuannie:2,huanglong:1},base:0.50, diff:40 },
+  ningjin: { name:"凝金丹", mats:{huanglong:2,qiansui:1},base:0.35, diff:70 },
+  yingbian:{ name:"婴变丹", mats:{qiansui:3},            base:0.25, diff:110 },
+  huashen: { name:"化神丹", mats:{qiansui:5,jingjing:1}, base:0.15, diff:160 },
+};
+// 炼器图谱
+const QI_RECIPES = {
+  wufeng:  { name:"乌锋剑",     mats:{jingtie:3},            base:0.85, diff:12 },
+  huoyun:  { name:"火蟒剑",     mats:{xuantie:3},            base:0.65, diff:30 },
+  qingzhu: { name:"青竹蜂云剑", mats:{xuantie:2,jinleizhu:2},base:0.45, diff:60 },
+  feijian: { name:"三焰扇",     mats:{jingjing:3,jinleizhu:2},base:0.30, diff:100 },
+};
+// 宗门贡献阁
+const SECT_SHOP = [
+  { key:"pill:juqi",      name:"聚气丹×1",  cost:30 },
+  { key:"pill:zhujidan",  name:"筑基丹",    cost:300 },
+  { key:"pill:ningjin",   name:"凝金丹",    cost:800 },
+  { key:"pill:yingbian",  name:"婴变丹",    cost:2000 },
+  { key:"pill:huashen",   name:"化神丹",    cost:5000 },
+  { key:"gf:dayan",       name:"功法·大衍诀", cost:600 },
+  { key:"recipe:ningjin", name:"丹方·凝金丹", cost:200 },
+  { key:"recipe:yingbian",name:"丹方·婴变丹", cost:400 },
+  { key:"recipe:huashen", name:"丹方·化神丹", cost:800 },
+  { key:"recipe:feijian", name:"图谱·三焰扇", cost:500 },
+];
+// 敌人（按大境界分档）
+const ENEMIES = {
+  0: [
+    {name:"野狼", hp:60, atk:10, def:2, stones:[5,15], exp:20},
+    {name:"巨蝎兽", hp:80, atk:14, def:4, stones:[8,20], exp:30},
+    {name:"黑煞教探子", hp:100, atk:16, def:5, stones:[15,40], exp:45},
+    {name:"血蜘蛛", hp:120, atk:20, def:6, stones:[20,50], exp:60},
+  ],
+  1: [
+    {name:"妖化巨狼", hp:400, atk:45, def:15, stones:[50,120], exp:150},
+    {name:"墨蛟幼兽", hp:600, atk:60, def:20, stones:[80,180], exp:220},
+    {name:"魔道修士", hp:500, atk:70, def:18, stones:[120,260], exp:300},
+  ],
+  2: [
+    {name:"六翼霜蚣", hp:1800, atk:150, def:50, stones:[300,700], exp:600},
+    {name:"古剑门叛修", hp:2000, atk:180, def:60, stones:[400,900], exp:800},
+    {name:"妖丹獾兽", hp:2500, atk:200, def:70, stones:[500,1100], exp:1000},
+  ],
+  3: [
+    {name:"元婴老魔", hp:6000, atk:450, def:150, stones:[1500,3500], exp:2500},
+    {name:"上古妖猿", hp:9000, atk:560, def:200, stones:[2500,5000], exp:4000},
+  ],
+  4: [
+    {name:"化神劫修", hp:18000, atk:1100, def:400, stones:[6000,12000], exp:8000},
+    {name:"灵界使者", hp:22000, atk:1250, def:450, stones:[8000,16000], exp:10000},
+  ],
+};
+// 大境界突破需求与成功率
+const BIG_BREAK = {
+  1: { pill:"zhujidan", rate:0.9, noRate:0.15 },
+  2: { pill:"ningjin",  rate:0.8, noRate:0.08 },
+  3: { pill:"yingbian", rate:0.75, noRate:0.05 },
+  4: { pill:"huashen",  rate:0.7, noRate:0.03 },
+};
+// 血色禁地：五波敌人 + 各波掉落
+const DUNGEON_WAVES = [
+  {name:"血色狼群",         hp:150,  atk:22,  def:6,  stones:[30,60]},
+  {name:"铁甲蜈蚣",         hp:220,  atk:28,  def:10, stones:[50,90]},
+  {name:"血袍修士",         hp:320,  atk:36,  def:12, stones:[80,140]},
+  {name:"黑煞教执事",       hp:450,  atk:48,  def:16, stones:[120,200]},
+  {name:"血玉蜘蛛（禁地之主）", hp:850, atk:62, def:22, stones:[300,600], boss:true},
+];
+const DUNGEON_DROPS = [
+  { herbs:{}, ores:{jingtie:2}, pills:{} },
+  { herbs:{xuannie:1}, ores:{}, pills:{} },
+  { herbs:{}, ores:{xuantie:2}, pills:{} },
+  { herbs:{huanglong:1}, ores:{}, pills:{huichun:1} },
+  { herbs:{qiansui:1}, ores:{jingjing:1}, pills:{} }, // boss 额外机缘在战果中结算
+];
+
+/* ===================== 游戏状态 ===================== */
+let G = null;
+let rerollLeft = 3;
+let pendingLG = null;
+let B = null; // 战斗状态
+
+const $ = id => document.getElementById(id);
+function rand(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ---------- 灵根开局 ---------- */
+function rollLinggen(){
+  const total = LINGGENS.reduce((s,l)=>s+l.weight,0);
+  let r = Math.random()*total;
+  for(const l of LINGGENS){ r -= l.weight; if(r<=0) return l; }
+  return LINGGENS[4];
+}
+function showPendingLG(lg){
+  $("lg-name").textContent = lg.name;
+  $("lg-desc").textContent = lg.desc + "（修炼效率 ×" + lg.mult + "）";
+}
+$("btn-reroll").onclick = () => {
+  if(rerollLeft<=0) return;
+  pendingLG = rollLinggen();
+  showPendingLG(pendingLG);
+  rerollLeft--;
+  $("btn-reroll").textContent = "问命（剩余 " + rerollLeft + " 次）";
+  if(rerollLeft<=0) $("btn-reroll").disabled = true;
+  $("btn-start").disabled = false;
+};
+// 初始预览一次
+pendingLG = rollLinggen(); showPendingLG(pendingLG); $("btn-start").disabled = false;
+
+$("btn-start").onclick = () => {
+  const name = ($("inp-name").value || "韩立").trim().slice(0,8);
+  newGame(name, pendingLG);
+};
+
+function newGame(name, lg){
+  G = {
+    name, lgName: lg.name, lgMult: lg.mult,
+    realm: 0, layer: 1, exp: 0,
+    stones: 50,
+    pills: { juqi: 2, huichun: 1 },
+    herbs: {}, ores: {},
+    recipes: { dan:{juqi:1,huichun:1,huyuan:1,zhujidan:1}, qi:{wufeng:1,huoyun:1,qingzhu:1} },
+    alchemy: { lv:1, exp:0 },
+    crafting:{ lv:1, exp:0 },
+    sect: null, quest: null, pendingEscort: null,
+    gongfa: ["changchun"],
+    fqi: "none",
+    bottleLevel: 0,       // 掌天瓶灵液积累
+    hasBottle: true,      // 韩立同款开局奇遇
+    hasBeastBag: false, beetle: null,
+    dungeonRun: null,
+    location: "荒山野岭",
+    flags: {},
+    explores: 0, kills: 0,
+    startedAt: Date.now(),
+  };
+  recalcStats(); G.hp = G.maxhp; G.mp = G.maxmp;
+  $("screen-create").style.display = "none";
+  $("screen-game").style.display = "block";
+  $("log").innerHTML = "";
+  log("sys","【开篇】"+name+"，一个山村里走出的普通少年，意外获得了一只古怪的墨绿色小瓶——掌天瓶。仙路漫漫，自此启程。");
+  if(G.hasBottle) log("treasure","【掌天瓶】瓶中灵液缓慢凝结，隐隐催生草木。你隐约觉得，这是自己最大的依仗。（修炼效率 +30%）");
+  log("sys","提示：打坐修炼、出外历练采集灵草矿料；【炼丹炉】【炼器坊】可自制药器；炼气五层后可【宗门】拜师；炼气十一层解锁【血色禁地】副本；结丹期解锁【灵兽袋】养噬金虫。");
+  render(); save();
+}
+
+/* ---------- 属性计算 ---------- */
+function gongfaEffects(){
+  const e = { atkMult:1, expMult:1, spiritMult:1, critAdd:0, hpRegen:0, hpPenalty:0 };
+  for(const k of G.gongfa){ const g = GONGFA[k].effect;
+    e.atkMult*=g.atkMult||1; e.expMult*=g.expMult||1; e.spiritMult*=g.spiritMult||1;
+    e.critAdd+=g.critAdd||0; e.hpRegen+=g.hpRegen||0; e.hpPenalty+=g.hpPenalty||0;
+  }
+  return e;
+}
+function realmTotal(realm){
+  let n = 0;
+  for(let i=0;i<realm;i++) n += REALMS[i].layers;
+  return n + (realm>0 ? 1 : 0);
+}
+function recalcStats(){
+  const stage = realmTotal(G.realm) + G.layer;
+  const gf = gongfaEffects();
+  const bottle = G.hasBottle ? 1.3 : 1;
+  G.expMult = G.lgMult * gf.expMult * bottle;
+  G.maxhp = Math.round(100 + stage*stage*2.2 * (1 - gf.hpPenalty));
+  G.maxmp = Math.round(50 + stage*12);
+  G.atk = Math.round((8 + stage*4.5) * gf.atkMult * (1 + (FQI[G.fqi].atk||0)/100));
+  G.fqiAtk = FQI[G.fqi].atk||0;
+  G.def = Math.round(3 + stage*2.2);
+  G.spirit = Math.round(5 + stage*3 * gf.spiritMult);
+  G.crit = Math.min(0.5, 0.08 + gf.critAdd + G.spirit*0.001);
+  G.hp = Math.min(G.hp ?? G.maxhp, G.maxhp);
+  G.mp = Math.min(G.mp ?? G.maxmp, G.maxmp);
+}
+function expNeed(){
+  const R = REALMS[G.realm];
+  return Math.round(100 * G.layer * R.mult);
+}
+
+/* ---------- 材料工具 ---------- */
+function matCount(k){ return (G.herbs[k]||0) + (G.ores[k]||0); }
+function canAffordMats(mats){
+  for(const k in mats){ if(matCount(k) < mats[k]) return false; }
+  return true;
+}
+function consumeMats(mats){
+  for(const k in mats){
+    let need = mats[k];
+    const fromH = Math.min(G.herbs[k]||0, need);
+    if(fromH){ G.herbs[k]-=fromH; if(G.herbs[k]<=0) delete G.herbs[k]; need-=fromH; }
+    if(need>0 && G.ores[k]){ G.ores[k]-=need; if(G.ores[k]<=0) delete G.ores[k]; }
+  }
+}
+function checkSkillLevel(kind){
+  const s = G[kind];
+  const label = kind==="alchemy" ? "炼丹术" : "炼器术";
+  while(s.lv < 10 && s.exp >= s.lv*100){
+    s.exp -= s.lv*100; s.lv++;
+    log("sys","【技艺精进】"+label+"提升至 Lv."+s.lv+"！开炉成功率更佳。");
+  }
+}
+
+/* ---------- 日志 ---------- */
+function log(type, text){
+  const p = document.createElement("p");
+  p.className = "l-" + type;
+  p.innerHTML = text;
+  $("log").appendChild(p);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+/* ---------- 提示（一次性机缘播报） ---------- */
+function hints(){
+  if(!G.flags) G.flags = {};
+  if(G.realm===0 && G.layer>=5 && !G.sect && !G.flags.sectHint){
+    G.flags.sectHint = 1;
+    log("sys","【机缘】你的修为已至炼气五层，可前往【宗门】拜入黄枫谷，接取任务赚取贡献点。");
+  }
+  if(G.realm===0 && G.layer>=11 && !G.flags.dungeonHint){
+    G.flags.dungeonHint = 1;
+    log("sys","【传闻】血色禁地开启！炼气后期修士可入内探宝，机缘与凶险并存（见【血色禁地】按钮）。");
+  }
+}
+
+/* ---------- 渲染 ---------- */
+function render(){
+  if(!G) return;
+  const R = REALMS[G.realm];
+  const locEl = $("cmd-loc"); if(locEl) locEl.textContent = areaOf();
+  const adEl = $("area-desc"); if(adEl) adEl.textContent = MAPNODES[areaOf()].desc;
+  const dirBtns = { "mv-n":"n", "mv-s":"s", "mv-e":"e", "mv-w":"w" };
+  for(const id in dirBtns){
+    const b = $(id); if(!b) continue;
+    const dest = MAPNODES[areaOf()][dirBtns[id]];
+    b.disabled = !dest;
+    b.style.opacity = dest ? "" : "0.3";
+    if(dest && MAPNODES[dest].minRealm > G.realm){
+      b.title = "需 "+REALMS[MAPNODES[dest].minRealm].name+" 方可前往";
+      b.style.color = "#a0522d";
+    } else {
+      b.title = dest ? "前往 "+dest : "此路不通";
+      b.style.color = "";
+    }
+  }
+  $("realm-banner").textContent = "【" + R.name + " · " + R.layerFmt(G.layer) + "】";
+  $("st-name").textContent = G.name;
+  $("st-realm").textContent = R.name + " " + R.layerFmt(G.layer);
+  $("st-lg").textContent = G.lgName;
+  $("bar-hp").style.width = (G.hp/G.maxhp*100)+"%";
+  $("st-hp").textContent = "气血 " + Math.ceil(G.hp) + " / " + G.maxhp;
+  $("bar-mp").style.width = (G.mp/G.maxmp*100)+"%";
+  $("st-mp").textContent = "法力 " + Math.ceil(G.mp) + " / " + G.maxmp;
+  const need = expNeed();
+  $("bar-exp").style.width = Math.min(100, G.exp/need*100)+"%";
+  $("st-exp").textContent = "修为 " + Math.floor(G.exp) + " / " + need;
+  $("st-atk").textContent = G.atk + (G.fqiAtk?("（含"+FQI[G.fqi].name+"+"+G.fqiAtk+"）"):"");
+  $("st-def").textContent = G.def;
+  $("st-spirit").textContent = G.spirit;
+  $("st-stones").textContent = G.stones + " 块";
+
+  // 功法法器列表
+  let html = "";
+  for(const k of G.gongfa) html += `<div class="inv-item"><span>📜 ${GONGFA[k].name}</span></div>`;
+  html += `<div class="inv-item"><span>⚔️ 法器：${FQI[G.fqi].name}</span><span style="color:var(--ink-light);font-size:12px">+${G.fqiAtk}</span></div>`;
+  if(G.hasBottle) html += `<div class="inv-item"><span>🏺 掌天瓶</span><span style="color:var(--gold);font-size:12px">灵液 ${G.bottleLevel}/10</span></div>`;
+  $("gongfa-list").innerHTML = html;
+
+  // 杂艺 · 宗门
+  $("st-alc").textContent = "Lv." + G.alchemy.lv + "（经验 " + G.alchemy.exp + "/" + G.alchemy.lv*100 + "）";
+  $("st-craft").textContent = "Lv." + G.crafting.lv + "（经验 " + G.crafting.exp + "/" + G.crafting.lv*100 + "）";
+  $("st-sect").textContent = G.sect ? G.sect.name : "未入门（炼气五层可入）";
+  $("st-contrib").textContent = G.sect ? G.sect.contrib : "—";
+
+  // 灵兽
+  $("panel-beast").style.display = G.hasBeastBag ? "" : "none";
+  if(G.hasBeastBag && G.beetle){
+    const b = G.beetle;
+    $("st-beast").textContent = "噬金虫" + (b.king ? "王" : "群");
+    $("st-beastlv").textContent = b.king ? "已进化（威能尽展）" : "Lv." + b.lv + "（经验 " + b.exp + "/" + b.lv*60 + "）";
+    $("st-beastdmg").textContent = "每回合 " + (b.king ? 60 : b.lv*6) + " 点";
+  }
+
+  // 储物袋
+  let inv = "";
+  for(const k in G.pills){
+    const c = G.pills[k];
+    if(c>0) inv += `<div class="inv-item"><span>💊 ${PILLS[k].name} ×${c}</span><button class="btn ghost use-btn" onclick="usePill('${k}')">服用</button></div>`;
+  }
+  for(const k in G.herbs){
+    const c = G.herbs[k];
+    if(c>0) inv += `<div class="inv-item"><span>🌿 ${HERBS[k].name} ×${c}</span><span style="color:var(--ink-light);font-size:12px">可售 ${HERBS[k].sell}灵石</span></div>`;
+  }
+  for(const k in G.ores){
+    const c = G.ores[k];
+    if(c>0) inv += `<div class="inv-item"><span>⛏️ ${ORES[k].name} ×${c}</span><span style="color:var(--ink-light);font-size:12px">可售 ${ORES[k].sell}灵石</span></div>`;
+  }
+  $("inv-list").innerHTML = inv || "<p class='tip'>空空如也。</p>";
+
+  // 按钮可见性
+  $("act-sect").textContent = G.sect ? "🏯 宗门" : "🏯 入宗（炼气五层）";
+  $("act-dungeon").style.display = (G.realm===0 && G.layer>=11) ? "" : "none";
+  $("act-beast").style.display = G.hasBeastBag ? "" : "none";
+
+  // 突破按钮状态
+  const canLayer = G.exp >= expNeed() && !(G.layer===R.layers);
+  const canBig = G.layer===R.layers && G.exp >= expNeed() && G.realm < REALMS.length-1;
+  $("act-breakthrough").disabled = !(canLayer || canBig);
+  if(canBig){
+    const bb = BIG_BREAK[G.realm+1];
+    const hasPill = G.pills[bb.pill]>0;
+    $("breakthrough-tip").textContent = "大境界瓶颈在即！服用" + PILLS[bb.pill] + "可大幅提升成功率（当前" + (hasPill?"已备丹药":"未备丹药，成功率极低") + "）。";
+  } else if(canLayer){
+    $("breakthrough-tip").textContent = "修为已圆满，可冲击下一层。";
+  } else {
+    $("breakthrough-tip").textContent = "";
+  }
+  hints();
+}
+
+/* ---------- 修炼 ---------- */
+function meditateOnce(){
+  const gain = Math.round(12 * G.expMult * (0.85+Math.random()*0.3));
+  G.exp += gain;
+  G.mp = Math.min(G.maxmp, G.mp + G.maxmp*0.15);
+  G.hp = Math.min(G.maxhp, G.hp + G.maxhp*(0.03 + gongfaEffects().hpRegen));
+  if(G.hasBottle && Math.random()<0.35){
+    G.bottleLevel++;
+    if(G.bottleLevel>=10){
+      G.bottleLevel=0;
+      G.pills.juqi = (G.pills.juqi||0)+1;
+      log("treasure","【掌天瓶】瓶口绿光一闪，灵液滴落催生出丹药——获得【聚气丹】×1！");
+    }
+  }
+  if(Math.random()<0.06){
+    const ev = Math.random();
+    if(ev<0.4){ const s=rand(3,12); G.stones+=s; log("good","打坐时忽有所悟，行功路线悄然优化，顺手在洞府附近拾得灵石 ×"+s+"。"); }
+    else if(ev<0.7){ G.exp += gain; log("good","顿悟！此次修炼效果翻倍。"); }
+    else { log("good","灵气入体如溪汇海，今日修炼格外顺畅。（修为 +" + gain + "）"); return; }
+  }
+  log("normal","你盘膝而坐，吐纳灵气，修为增长 " + gain + " 点。");
+}
+
+$("act-meditate").onclick = () => {
+  meditateOnce();
+  render(); save();
+};
+$("act-seclusion").onclick = () => {
+  log("sys","【闭关】你布下聚灵阵，闭关十日……");
+  for(let i=0;i<10;i++) meditateOnce();
+  if(Math.random() < 0.12){
+    const dmg = G.maxhp*0.2;
+    G.hp = Math.max(1, G.hp - dmg);
+    G.exp = Math.max(0, G.exp*0.9);
+    log("bad","闭关途中灵气逆行，走火入魔！气血受损，修为倒挫一成。（气血 -"+Math.round(dmg)+"）");
+  } else {
+    log("good","十日苦修，功力精进。");
+  }
+  render(); save();
+};
+
+/* ---------- 突破 ---------- */
+$("act-breakthrough").onclick = () => {
+  const R = REALMS[G.realm];
+  const need = expNeed();
+  if(G.exp < need) return;
+  const isBig = G.layer===R.layers;
+  if(isBig){
+    if(G.realm >= REALMS.length-1){ log("sys","你已至化神后期圆满——此界之路，已到尽头。欲穷千里目，还须飞升灵界！（当前版本终局）"); render(); return; }
+    const bb = BIG_BREAK[G.realm+1];
+    const hasPill = (G.pills[bb.pill]||0) > 0;
+    const rate = hasPill ? bb.rate : bb.noRate;
+    if(hasPill){ G.pills[bb.pill]--; log("sys","你服下【"+PILLS[bb.pill]+"】，闭目冲击大境界瓶颈……"); }
+    else log("bad","无辅助丹药，强行冲关，生死难料……");
+    if(Math.random() < rate){
+      G.realm++; G.layer = 1; G.exp = 0;
+      recalcStats(); G.hp = G.maxhp; G.mp = G.maxmp;
+      log("sys","【境界突破】轰——瓶颈碎裂！你成功踏入【"+REALMS[G.realm].name+"·初期】！寿元大增，法力滔天。");
+      if(G.realm===2 && !G.hasBeastBag){
+        G.hasBeastBag = true;
+        G.beetle = { lv:1, exp:0, king:false };
+        log("treasure","【灵兽袋】结丹之后，你从一处陨落修士的遗府中获得一只【灵兽袋】，袋中竟栖息着一群嗜金如命的噬金虫！喂食灵石与金属矿料可令虫群成长，斗法时每回合噬咬敌手。（新行动：【灵兽袋】）");
+      }
+    } else {
+      G.exp = need*0.6;
+      const dmg = G.maxhp*0.25;
+      G.hp = Math.max(1, G.hp-dmg);
+      log("bad","突破失败！真元紊乱，气血受创（-"+Math.round(dmg)+"），修为回落。稳妥起见，还是先备下丹药吧。");
+    }
+  } else {
+    const rate = 0.95;
+    if(Math.random()<rate){
+      G.layer++; G.exp = 0;
+      recalcStats(); G.hp = G.maxhp; G.mp = G.maxmp;
+      log("sys","【小瓶颈破】修为精进，你已至"+REALMS[G.realm].name+"·"+REALMS[G.realm].layerFmt(G.layer)+"。");
+    } else {
+      G.exp = need*0.7;
+      log("bad","冲击小瓶颈失败，修为回落，再接再厉。");
+    }
+  }
+  render(); save();
+};
+
+/* ---------- 历练地图（节点 + 方向移动） ---------- */
+const MAPNODES = {
+  "青牛镇": {
+    desc:"山脚下的小镇，凡人与散修杂居，坊市便设在镇中。太平无事，适合休整与补给。",
+    gates:{ battle:0.02, herb:0.10, ore:0.15, stones:0.22, luck:0.32, peddler:0.62 },
+    safe:true, tierPlus:0, minRealm:0, n:"荒山野岭",
+  },
+  "荒山野岭": {
+    desc:"连绵荒山，灵气稀薄，偶有野兽妖虫出没。北通乱岭山脉，东有灵溪谷，西是落霞坡。",
+    gates:{ battle:0.38, herb:0.52, ore:0.62, stones:0.70, luck:0.78, peddler:0.86 },
+    tierPlus:0, minRealm:0, n:"乱岭山脉", s:"青牛镇", e:"灵溪谷", w:"落霞坡",
+  },
+  "灵溪谷": {
+    desc:"溪涧纵横，水汽氤氲，灵草茂盛，是采药人的宝地。偶有护草灵兽出没。",
+    gates:{ battle:0.28, herb:0.66, ore:0.74, stones:0.80, luck:0.88, peddler:0.93 },
+    tierPlus:0, minRealm:0, w:"荒山野岭",
+  },
+  "落霞坡": {
+    desc:"夕阳染红的缓坡，矿脉外露，碎金闪烁，采石人络绎不绝。",
+    gates:{ battle:0.28, herb:0.50, ore:0.74, stones:0.82, luck:0.88, peddler:0.93 },
+    tierPlus:0, minRealm:0, e:"荒山野岭",
+  },
+  "乱岭山脉": {
+    desc:"灵气较盛，妖兽横行，采药人与猎户常出没于此。北面山脊之后便是太南山脉，东边有魔修盘踞的黑风寨。",
+    gates:{ battle:0.50, herb:0.72, ore:0.80, stones:0.85, luck:0.90, peddler:0.94 },
+    tierPlus:0, minRealm:0, s:"荒山野岭", n:"太南山脉", e:"黑风寨",
+  },
+  "黑风寨": {
+    desc:"魔修盘踞的山寨，杀机四伏，然寨中财货亦丰。胆小者莫入。",
+    gates:{ battle:0.65, herb:0.78, ore:0.84, stones:0.88, luck:0.93, peddler:0.95 },
+    tierPlus:0, minRealm:0, w:"乱岭山脉",
+  },
+  "太南山脉": {
+    desc:"灵脉汇聚之地，奇珍异兽与凶险并存，传闻深处有大妖盘踞。非筑基以上修士，莫要深入。",
+    gates:{ battle:0.55, herb:0.72, ore:0.85, stones:0.88, luck:0.93, peddler:0.95 },
+    tierPlus:1, minRealm:1, s:"乱岭山脉",
+  },
+};
+const DIRNAME = { n:"北", s:"南", e:"东", w:"西" };
+function areaOf(){ return MAPNODES[G.location] ? G.location : "荒山野岭"; }
+
+function exploreRoll(node){
+  const A = MAPNODES[node];
+  const tier = Math.min(4, G.realm + (A.tierPlus||0));
+  const g = A.gates;
+  const roll = Math.random();
+  if(roll < g.battle){
+    startBattle(null, tier);
+    return true; // 战斗结束在战斗流程里 render/save
+  }
+  if(roll < g.herb){ // 采药
+    const pool = [["lingcao"],["lingcao","xuannie"],["xuannie","huanglong"],["huanglong","qiansui"],["qiansui"]][tier];
+    const h = pick(pool);
+    G.herbs[h] = (G.herbs[h]||0)+1;
+    let extra = "";
+    if(G.hasBottle && Math.random()<0.3){
+      G.herbs[h]++;
+      extra = "【掌天瓶】灵液催生，又一株自行抽枝成熟！";
+    }
+    if(G.beetle && G.beetle.king && Math.random()<0.5){
+      G.herbs[h]++;
+      extra += "噬金虫王钻地引路，觅得隐蔽灵药一株！";
+    }
+    if(extra){ log("treasure","【采药】"+HERBS[h].name+" ×"+G.herbs[h]+"。"+extra); }
+    else log("good","【"+node+"】你在山野间寻得灵药——"+HERBS[h].name+" ×1。（炼丹材料，亦可售）");
+  } else if(roll < g.ore){ // 采矿
+    const pool = [["jingtie"],["jingtie","xuantie"],["xuantie","jingjing"],["jingjing","jinleizhu"],["jinleizhu"]][tier];
+    const o = Math.random()<0.25 ? pool[pool.length-1] : pool[0];
+    const n = (o==="jinleizhu"||o==="jingjing") ? 1 : rand(1,3);
+    G.ores[o] = (G.ores[o]||0)+n;
+    log("good","【"+node+"】你寻得一处矿脉，采得"+ORES[o].name+" ×"+n+"。（炼器材料，亦可售）");
+  } else if(roll < g.stones){ // 拾取灵石
+    const s = rand(10,40) * (tier+1);
+    G.stones += s;
+    log("good","【"+node+"】途经一处废弃洞府，拾得灵石 ×"+s+"。");
+  } else if(roll < g.luck){ // 奇遇
+    exploreLuck();
+  } else if(roll < g.peddler){ // 遇坊市货郎
+    const s = rand(20,60)*(G.realm+1);
+    G.stones += s;
+    G.pills.huichun = (G.pills.huichun||0)+1;
+    log("good","【"+node+"】遇到一位游方货郎，做成一笔小买卖：灵石 ×"+s+"，还赠了【回春丹】一枚。");
+  } else if(A.safe){ // 安全地带：闲逛小憩
+    const gain = Math.round(12 * G.expMult);
+    G.exp += gain;
+    log("normal","【"+node+"】在街市间信步闲逛，偶闻修士轶事，修为 +"+gain+"。");
+  } else { // 随机事件池
+    randomEvent();
+  }
+  return false; // 未触发战斗
+}
+
+/* ---------- 历练（原地搜寻） ---------- */
+$("act-explore").onclick = () => {
+  G.explores++;
+  if(exploreRoll(areaOf())) return;
+  render(); save();
+};
+
+/* ---------- 方向移动 ---------- */
+function moveDir(dir){
+  const here = areaOf();
+  const dest = MAPNODES[here][dir];
+  if(!dest){ log("normal","【"+here+"】此路不通，已是穷途，换个方向吧。"); render(); save(); return; }
+  const A = MAPNODES[dest];
+  if(A.minRealm > G.realm){
+    log("bad","【"+dest+"】灵压森然，以你当前修为贸然深入无异于送死。至少需"+REALMS[A.minRealm].name+"方可前往。");
+    render(); save(); return;
+  }
+  G.location = dest;
+  G.explores++;
+  log("sys","【行路】你朝"+DIRNAME[dir]+"而行，来到【"+dest+"】。");
+  if(Math.random() < 0.85){
+    if(exploreRoll(dest)) return; // 战斗接管后续
+  } else {
+    log("normal","一路跋涉，风尘仆仆，倒也平安。");
+  }
+  render(); save();
+}
+$("mv-n").onclick = ()=>moveDir("n");
+$("mv-s").onclick = ()=>moveDir("s");
+$("mv-e").onclick = ()=>moveDir("e");
+$("mv-w").onclick = ()=>moveDir("w");
+$("mv-stay").onclick = ()=>{ G.explores++; if(exploreRoll(areaOf())) return; render(); save(); };
+
+/* ---------- 历练随机事件池 ---------- */
+function randomEvent(){
+  // 故人回报（救治伤修士的连锁事件，优先结算）
+  if(G.flags.grateful){
+    G.flags.grateful--;
+    if(G.flags.grateful<=0){
+      delete G.flags.grateful;
+      const s = rand(150,300)*(G.realm+1);
+      G.stones += s;
+      const p = Math.random()<0.5 ? "huyuan" : "huichun";
+      G.pills[p] = (G.pills[p]||0)+1;
+      log("good","【故人相报】当初救治的那位修士寻上门来，奉上灵石 ×"+s+"与【"+PILLS[p].name+"】一枚，谢你救命之恩。");
+      return;
+    }
+    log("normal","那位被你救过的修士捎来口信：谢礼已在筹备，还望道友再候几日。");
+    return;
+  }
+  const r = Math.random();
+  if(r < 0.10){ // 灵泉沐浴
+    G.hp = G.maxhp; G.mp = G.maxmp;
+    log("good","【灵泉】你在山涧深处寻得一汪灵泉，泉水中灵气氤氲。沐浴一番，气血法力尽复，遍体舒泰。");
+  } else if(r < 0.20){ // 散修前辈指点
+    const isAlc = Math.random()<0.5;
+    const sk = isAlc ? G.alchemy : G.crafting;
+    const name = isAlc ? "炼丹术" : "炼器术";
+    const gain = rand(30,60);
+    if(sk.lv >= 10){
+      log("good","【前辈指点】一位散修前辈与你论道半日，可惜你在"+name+"上已臻圆满（Lv.10），只余切磋之乐。修为 +"+Math.round(gain*G.expMult)+"。");
+      G.exp += Math.round(gain*G.expMult);
+    } else {
+      sk.exp += gain;
+      checkSkillLevel(isAlc ? "alchemy" : "crafting");
+      log("good","【前辈指点】路遇一位散修前辈，酣谈半日，"+name+"心得 +"+gain+"。");
+    }
+  } else if(r < 0.32){ // 闭目悟道
+    const gain = Math.round(rand(25,45) * (G.realm+1) * G.expMult);
+    G.exp += gain;
+    log("good","【悟道】你于孤峰之顶观云海翻腾，忽有所悟，修为 +"+gain+"。");
+  } else if(r < 0.44){ // 前人遗府储物袋
+    const s = rand(30,80)*(G.realm+1);
+    G.stones += s;
+    const p = pick(["juqi","huichun","huyuan"]);
+    G.pills[p] = (G.pills[p]||0)+1;
+    log("treasure","【遗府】你在乱石岗发现一具坐化的枯骨，身前遗落储物袋——内有灵石 ×"+s+"、【"+PILLS[p].name+"】一枚。愿其安息。");
+  } else if(r < 0.54){ // 瘴气阴风（负面）
+    const dmg = Math.round(G.maxhp*rand(10,20)/100);
+    G.hp = Math.max(1, G.hp-dmg);
+    log("bad","【瘴气】误入一处阴煞之地，瘴气侵体，气血受创 -"+dmg+"。速速服丹调养吧。");
+  } else if(r < 0.64){ // 毛贼偷灵石（负面）
+    const loss = Math.min(G.stones, rand(20,60)*(G.realm+1));
+    if(loss > 0){
+      G.stones -= loss;
+      log("bad","【毛贼】夜宿荒庙时遭梁上君子光顾，神识不济未能察觉——灵石 ×"+loss+" 不翼而飞。提升神识方可防患于未然。");
+    } else {
+      log("normal","夜宿荒庙，恍惚间似有人影掠过——好在你身无分文，毛贼空手而归。");
+    }
+  } else if(r < 0.76){ // 救治受伤修士（连锁回报）
+    G.flags.grateful = rand(2,4);
+    log("good","【义举】你救下一名被妖兽重创的落难修士，赠丹送药。对方临别时言道：大恩不言谢，他日必报。（数日后或有回报）");
+  } else if(r < 0.88){ // 石壁剑痕
+    const gain = Math.round(rand(15,30) * (G.realm+1) * G.expMult);
+    G.exp += gain;
+    log("good","【剑痕】你在绝壁之下发现一道深不见底的远古剑痕，驻足观摩半日，隐隐触到一丝剑意，修为 +"+gain+"。");
+  } else { // 无事发生
+    const gain = Math.round(8 * G.expMult);
+    G.exp += gain;
+    log("normal","一路游历，看云卷云舒，心境圆融，修为 +"+gain+"。");
+  }
+}
+
+function exploreLuck(){
+  const r = Math.random();
+  if(r < 0.3){
+    const pool = Object.keys(GONGFA).filter(k=>!G.gongfa.includes(k) && GONGFA[k].price>0 && GONGFA[k].price<=3000);
+    if(pool.length){
+      const k = pick(pool);
+      G.gongfa.push(k);
+      recalcStats();
+      log("treasure","【奇遇】在一处残破古修洞府中，你得了一部失传功法——【"+GONGFA[k].name+"】！"+GONGFA[k].desc);
+      return;
+    }
+  }
+  if(r < 0.5){
+    const pool = Object.keys(FQI).filter(k=>FQI[k].price>0 && FQI[k].price<=5000 && FQI[k].atk>(FQI[G.fqi].atk||0));
+    if(pool.length){
+      const k = pick(pool);
+      G.fqi = k; recalcStats();
+      log("treasure","【奇遇】斩杀一名魔修，缴获其本命法器——【"+FQI[k].name+"】！已装备。");
+      return;
+    }
+  }
+  if(r < 0.7){
+    const pillPool = ["juqi","juqi","huichun","huyuan"];
+    if(G.realm>=1) pillPool.push("zhujidan");
+    const p = pick(pillPool);
+    G.pills[p] = (G.pills[p]||0)+1;
+    log("treasure","【奇遇】灵草丛后发现一枚保存完好的古丹——【"+PILLS[p].name+"】×1！");
+    return;
+  }
+  const s = rand(100,400)*(G.realm+1);
+  G.stones += s;
+  log("treasure","【奇遇】你无意间撞破一处上古修士遗府，满地灵石唾手可得——灵石 ×"+s+"！");
+}
+
+/* ---------- 战斗 ---------- */
+function startBattle(forcedEnemy, tierOverride){
+  const tier = (tierOverride != null) ? tierOverride : Math.min(4, G.realm);
+  let pool = ENEMIES[tier];
+  if(Math.random()<0.12 && ENEMIES[tier+1]) pool = ENEMIES[tier+1].slice(0,1).concat(pool);
+  let e0;
+  if(forcedEnemy){ e0 = forcedEnemy; }
+  else { const t = pick(pool); e0 = { name:t.name, hp:t.hp, atk:t.atk, def:t.def, stones:t.stones, exp:t.exp }; }
+  B = {
+    e: { name:e0.name, hp:e0.hp, maxhp:e0.hp, atk:e0.atk, def:e0.def,
+         stones:e0.stones, exp:e0.exp, dungeon:!!e0.dungeon, boss:!!e0.boss, escort:!!e0.escort },
+    over: false,
+  };
+  $("battle").style.display = "flex";
+  $("blog").innerHTML = "";
+  blog("sys","遭遇【"+e0.name+"】！杀气腾腾，避无可避。");
+  if(e0.dungeon) blog("sys","血色禁地内灵气紊乱，【遁走】无效，唯有死战！");
+  updateBattleUI();
+}
+function blog(type,text){
+  const p=document.createElement("p");
+  p.className="l-"+type;
+  p.textContent=text;
+  $("blog").appendChild(p);
+  $("blog").scrollTop=$("blog").scrollHeight;
+}
+function updateBattleUI(){
+  $("b-pname").textContent = G.name;
+  $("b-php").style.width = Math.max(0,G.hp/G.maxhp*100)+"%";
+  $("b-phpnum").textContent = "气血 "+Math.max(0,Math.ceil(G.hp))+"/"+G.maxhp+"  法力 "+Math.ceil(G.mp);
+  $("b-patk").textContent = G.atk;
+  $("b-ename").textContent = B.e.name;
+  $("b-ehp").style.width = Math.max(0,B.e.hp/B.e.maxhp*100)+"%";
+  $("b-ehpnum").textContent = "气血 "+Math.max(0,Math.ceil(B.e.hp))+"/"+B.e.maxhp;
+  $("b-eatk").textContent = B.e.atk;
+}
+function pDmgCalc(mult, crit){
+  let dmg = Math.max(1, G.atk*mult - B.e.def*0.5);
+  dmg *= 0.9 + Math.random()*0.2;
+  if(crit) dmg *= 1.8;
+  return Math.round(dmg);
+}
+function endBattle(win){
+  B.over = true;
+  setTimeout(()=>{
+    $("battle").style.display = "none";
+    if(win){
+      if(B.e.dungeon){ dungeonWin(); return; }
+      const s = rand(B.e.stones[0], B.e.stones[1]);
+      G.stones += s;
+      G.exp += Math.round(B.e.exp * G.expMult);
+      G.kills++;
+      log("good","【战果】击败"+B.e.name+"！缴获灵石 ×"+s+"，修为 +"+Math.round(B.e.exp*G.expMult)+"。");
+      if(B.e.escort){
+        grantQuestReward(G.pendingEscort);
+        G.quest = null; G.pendingEscort = null;
+      } else if(G.quest && G.quest.type==="kill"){
+        G.quest.prog = Math.min(G.quest.need, G.quest.prog+1);
+        log("sys","【宗门任务】"+G.quest.desc+"（进度 "+G.quest.prog+"/"+G.quest.need+"）。");
+      }
+      if(Math.random()<0.18){
+        const pool=["juqi","huichun","huyuan"];
+        if(G.realm>=1) pool.push("zhujidan");
+        const p=pick(pool);
+        G.pills[p]=(G.pills[p]||0)+1;
+        log("treasure","从其遗物中寻得【"+PILLS[p].name+"】×1！");
+      }
+    }
+    render(); save();
+  }, 900);
+}
+function playerAction(kind){
+  if(B.over) return;
+  if(kind==="atk"){
+    const crit = Math.random()<G.crit;
+    const d = pDmgCalc(1.0, crit);
+    B.e.hp -= d;
+    blog(crit?"good":"combat",(crit?"会心一击！":"")+"你挥出"+FQI[G.fqi].name+"，造成 "+d+" 点伤害。");
+  } else if(kind==="spell"){
+    if(G.mp < 8){ blog("bad","法力不足，御剑失败！"); }
+    else {
+      G.mp -= 8;
+      const crit = Math.random()<G.crit+0.1;
+      const d = pDmgCalc(1.9, crit);
+      B.e.hp -= d;
+      blog(crit?"good":"combat","你掐诀御剑，剑光如虹——造成 "+d+" 点伤害！"+(crit?"（神识加持，一剑破防！）":""));
+    }
+  } else if(kind==="flee"){
+    if(B.e.dungeon){
+      blog("bad","血色禁地中灵气紊乱，遁术受阻，无法逃离！");
+    } else if(Math.random() < 0.5 + G.spirit*0.002){
+      blog("sys","你祭出遁光，成功脱离战场！");
+      endBattle(false);
+      return;
+    } else {
+      blog("bad","遁走失败！被对方缠住。");
+    }
+  }
+  if(B.e.hp<=0){ blog("sys","【"+B.e.name+"】轰然倒地！"); endBattle(true); return; }
+  setTimeout(enemyTurn, 450);
+}
+function enemyTurn(){
+  if(B.over) return;
+  let d = Math.max(1, B.e.atk*(0.85+Math.random()*0.3) - G.def*0.6);
+  const crit = Math.random()<0.1;
+  if(crit) d*=1.6;
+  d = Math.round(d);
+  G.hp -= d;
+  blog("bad",B.e.name+(crit?"狂性大发，":"")+"攻来，你受 "+d+" 点伤害。");
+  updateBattleUI();
+  if(G.hp<=0){
+    blog("sys","你身受重伤，勉强祭出一道遁光逃出生天……");
+    endBattleDefeat();
+    return;
+  }
+  // 噬金虫辅攻
+  if(G.hasBeastBag && G.beetle){
+    const bd = G.beetle.king ? 60 : G.beetle.lv*6;
+    B.e.hp -= bd;
+    blog("good","噬金虫群嗡鸣扑上，噬咬"+B.e.name+"造成 "+bd+" 点伤害！");
+    if(B.e.hp<=0){
+      blog("sys","【"+B.e.name+"】被虫群啃噬殆尽！");
+      endBattle(true);
+      return;
+    }
+  }
+  updateBattleUI();
+}
+function endBattleDefeat(){
+  B.over = true;
+  const lost = Math.round(G.stones*0.2);
+  G.stones -= lost;
+  G.exp = Math.max(0, G.exp*0.85);
+  G.hp = Math.max(1, G.maxhp*0.15);
+  const inDungeon = !!G.dungeonRun;
+  if(inDungeon) G.dungeonRun = null;
+  if(B.e.escort && G.quest){ G.quest = null; G.pendingEscort = null; }
+  setTimeout(()=>{
+    $("battle").style.display="none";
+    log("bad","【重伤】你败于"+B.e.name+"之手，侥幸逃回，遗落灵石 ×"+lost+"，修为略有倒挫。养伤数日后恢复如初。");
+    if(inDungeon) log("bad","【血色禁地】禁地凶险，你一路败退，本次深入所获的战利品尽数遗落！");
+    if(B.e.escort) log("sys","【宗门任务】押送失败，任务作废（贡献与灵石奖励失去）。");
+    render(); save();
+  }, 900);
+}
+$("b-atk").onclick = ()=>playerAction("atk");
+$("b-spell").onclick = ()=>playerAction("spell");
+$("b-flee").onclick = ()=>playerAction("flee");
+$("b-pill").onclick = ()=>{
+  const list = Object.keys(G.pills).filter(k=>G.pills[k]>0 && PILLS[k].battle);
+  const el = $("b-pill-list");
+  if(!list.length){ blog("sys","储物袋中没有可在斗法中使用的丹药。"); return; }
+  el.style.display="block";
+  el.innerHTML = list.map(k=>`<button class="btn ghost" style="margin:4px" onclick="battleUsePill('${k}')">${PILLS[k].name} ×${G.pills[k]}</button>`).join("");
+};
+window.battleUsePill = function(k){
+  G.pills[k]--;
+  if(k==="huichun"){ G.hp = Math.min(G.maxhp, G.hp + G.maxhp*0.4); blog("good","服下回春丹，气血恢复四成。"); }
+  if(k==="huyuan"){ G.mp = Math.min(G.maxmp, G.mp + G.maxmp*0.5); blog("good","服下护元丹，法力恢复五成。"); }
+  $("b-pill-list").style.display="none";
+  updateBattleUI();
+  setTimeout(enemyTurn, 450);
+};
+window.usePill = function(k){
+  if(!(G.pills[k]>0)) return;
+  const p = PILLS[k];
+  if(p.battle){ log("sys",p.name+"宜在斗法中使用（战斗界面点【服丹】）。"); return; }
+  if(k==="juqi"){
+    G.pills[k]--;
+    const gain = Math.round(60 * G.expMult * (1+G.realm*0.8));
+    G.exp += gain;
+    log("good","服下【聚气丹】，药力化开，修为 +"+gain+"。");
+  } else {
+    log("sys","【"+p.name+"】是冲击大境界瓶颈的辅药。修为圆满后点【冲击瓶颈】即可自动服用。");
+  }
+  render(); save();
+};
+
+/* ---------- 血色禁地 ---------- */
+$("act-dungeon").onclick = () => {
+  if(!(G.realm===0 && G.layer>=11)) return;
+  if(G.dungeonRun){ log("sys","你已在禁地探索途中……"); return; }
+  if(!confirm("【血色禁地】共五波强敌，禁地内无法遁逃；一旦重伤败退，本次深入的所有战利品将尽数遗落！\n\n确定进入吗？（战斗胜利后可选择继续深入或带战利品撤离）")){
+    return;
+  }
+  G.dungeonRun = { wave:0, loot:{ stones:0, items:{} } };
+  log("sys","【血色禁地】你踏入弥漫血雾的古禁地，杀机四伏……");
+  nextDungeonWave();
+};
+function nextDungeonWave(){
+  const run = G.dungeonRun;
+  const w = DUNGEON_WAVES[run.wave];
+  const scale = 1 + G.realm*2.2;
+  startBattle({
+    name:w.name,
+    hp:Math.round(w.hp*scale),
+    atk:Math.round(w.atk*scale),
+    def:Math.round(w.def*scale),
+    stones:w.stones,
+    exp:Math.round(w.stones[1]*2),
+    dungeon:true, boss:!!w.boss,
+  });
+}
+function dungeonWin(){
+  const run = G.dungeonRun;
+  const s = rand(B.e.stones[0], B.e.stones[1]);
+  run.loot.stones += s;
+  const drop = DUNGEON_DROPS[run.wave];
+  let dropTxt = [];
+  for(const k in drop.herbs){ run.loot.items[k]=(run.loot.items[k]||0)+drop.herbs[k]; dropTxt.push(HERBS[k].name+"×"+drop.herbs[k]); }
+  for(const k in drop.ores){ run.loot.items[k]=(run.loot.items[k]||0)+drop.ores[k]; dropTxt.push(ORES[k].name+"×"+drop.ores[k]); }
+  for(const k in drop.pills){ run.loot.items["p_"+k]=(run.loot.items["p_"+k]||0)+drop.pills[k]; dropTxt.push(PILLS[k].name+"×"+drop.pills[k]); }
+  if(B.e.boss){
+    const r = Math.random();
+    if(r < 0.4){ run.loot.stones += 1000*(G.realm+1); log("treasure","【禁地机缘】你在禁地之主的老巢中发现堆积如山的灵石！"); }
+    else if(r < 0.7){ run.loot.items["p_zhujidan"]=(run.loot.items["p_zhujidan"]||0)+1; log("treasure","【禁地机缘】禁地之主的丹房中留有一瓶完好的古丹——【筑基丹】×1！"); }
+    else { run.loot.items.huanglong=(run.loot.items.huanglong||0)+2; log("treasure","【禁地机缘】血池深处竟生长着两株千年黄龙芝！"); }
+  }
+  log("good","【禁地战果】击败"+B.e.name+"！本波获得：灵石 ×"+s+(dropTxt.length?("，"+dropTxt.join("、")):"")+"（暂存于行囊，撤离或通关后入袋）。");
+  run.wave++;
+  if(run.wave >= DUNGEON_WAVES.length){
+    log("sys","【通关】你踏平血色禁地，全身而退！");
+    finalizeDungeon();
+    return;
+  }
+  if(confirm("前方还有 "+(DUNGEON_WAVES.length-run.wave)+" 波强敌，且战利品暂存行囊——一旦败退将全部遗落。\n\n继续深入，还是见好就收？\n（确定=继续深入，取消=带战利品撤离）")){
+    nextDungeonWave();
+  } else {
+    log("sys","【撤离】你当机立断，撤出禁地。");
+    finalizeDungeon();
+  }
+}
+function finalizeDungeon(){
+  const run = G.dungeonRun;
+  if(!run) return;
+  G.stones += run.loot.stones;
+  let txt = [];
+  for(const k in run.loot.items){
+    if(k.startsWith("p_")){ const pk=k.slice(2); G.pills[pk]=(G.pills[pk]||0)+run.loot.items[k]; txt.push(PILLS[pk].name+"×"+run.loot.items[k]); }
+    else if(HERBS[k]){ G.herbs[k]=(G.herbs[k]||0)+run.loot.items[k]; txt.push(HERBS[k].name+"×"+run.loot.items[k]); }
+    else if(ORES[k]){ G.ores[k]=(G.ores[k]||0)+run.loot.items[k]; txt.push(ORES[k].name+"×"+run.loot.items[k]); }
+  }
+  log("treasure","【血色禁地·收获】灵石 ×"+run.loot.stones+(txt.length?("，"+txt.join("、")):"")+"，尽数收入储物袋！");
+  G.dungeonRun = null;
+  render(); save();
+}
+
+/* ---------- 炼丹 ---------- */
+$("act-alchemy").onclick = () => {
+  const known = Object.keys(DAN_RECIPES).filter(k=>G.recipes.dan[k]);
+  let lines = ["【炼丹炉】炼丹术 Lv."+G.alchemy.lv+"（成功率加成 +"+((G.alchemy.lv-1)*3)+"%，Lv10封顶）",""];
+  known.forEach(k=>{
+    const r = DAN_RECIPES[k];
+    const mats = Object.keys(r.mats).map(m=>MATS[m].name+"×"+r.mats[m]+"（持有"+matCount(m)+"）").join("、");
+    lines.push("💊 "+r.name+" | 材料："+mats+" | 基础成功率 "+Math.round(r.base*100)+"%");
+  });
+  const locked = Object.keys(DAN_RECIPES).filter(k=>!G.recipes.dan[k]);
+  if(locked.length) lines.push("（未学丹方："+locked.map(k=>DAN_RECIPES[k].name).join("、")+"——可在宗门贡献阁兑换丹方）");
+  lines.push("","示例输入：炼 聚气丹");
+  const cmd = prompt(lines.join("\n")+"\n\n输入指令（留空取消）：");
+  if(!cmd) return;
+  const m = cmd.trim().match(/^(炼)\s*(\S+)$/);
+  if(!m){ log("sys","指令示例：炼 聚气丹"); return; }
+  doAlchemy(Object.keys(DAN_RECIPES).find(k=>DAN_RECIPES[k].name===m[2]));
+};
+function doAlchemy(key){
+  if(!key){ log("sys","坊市与丹阁中均无此丹方。"); return; }
+  if(!G.recipes.dan[key]){ log("sys","你尚未掌握该丹方（可在宗门贡献阁兑换）。"); return; }
+  const r = DAN_RECIPES[key];
+  if(!canAffordMats(r.mats)){ log("bad","药材不足，无法开炉。"); return; }
+  consumeMats(r.mats);
+  const rate = Math.min(0.95, r.base + (G.alchemy.lv-1)*0.03);
+  G.alchemy.exp += Math.round(r.diff*0.5);
+  if(Math.random() < rate){
+    G.pills[key] = (G.pills[key]||0)+1;
+    G.alchemy.exp += r.diff;
+    log("good","丹炉火候正好，药香四溢——一炉【"+r.name+"】成丹！（炼丹术经验 +"+Math.round(r.diff*1.5)+"）");
+  } else {
+    log("bad","火候失控，药材化为焦炭……炼丹失败，所幸略有所悟（炼丹术经验 +"+Math.round(r.diff*0.5)+"）。");
+  }
+  checkSkillLevel("alchemy");
+  render(); save();
+}
+
+/* ---------- 炼器 ---------- */
+$("act-forge").onclick = () => {
+  const known = Object.keys(QI_RECIPES).filter(k=>G.recipes.qi[k]);
+  let lines = ["【炼器坊】炼器术 Lv."+G.crafting.lv+"（成功率加成 +"+((G.crafting.lv-1)*3)+"%，Lv10封顶）","",
+    "当前法器："+FQI[G.fqi].name+"（攻+"+G.fqiAtk+"）",""];
+  known.forEach(k=>{
+    const r = QI_RECIPES[k];
+    const mats = Object.keys(r.mats).map(m=>MATS[m].name+"×"+r.mats[m]+"（持有"+matCount(m)+"）").join("、");
+    lines.push("⚔️ "+r.name+" | 材料："+mats+" | 基础成功率 "+Math.round(r.base*100)+"% | 攻+"+FQI[k].atk);
+  });
+  const locked = Object.keys(QI_RECIPES).filter(k=>!G.recipes.qi[k]);
+  if(locked.length) lines.push("（未学图谱："+locked.map(k=>QI_RECIPES[k].name).join("、")+"——三焰扇图谱可在宗门贡献阁兑换）");
+  lines.push("","示例输入：锻 乌锋剑（炼成若弱于现有法器，将自动折价出售）");
+  const cmd = prompt(lines.join("\n")+"\n\n输入指令（留空取消）：");
+  if(!cmd) return;
+  const m = cmd.trim().match(/^(炼|锻)\s*(\S+)$/);
+  if(!m){ log("sys","指令示例：锻 乌锋剑"); return; }
+  doForge(Object.keys(QI_RECIPES).find(k=>QI_RECIPES[k].name===m[2]));
+};
+function doForge(key){
+  if(!key){ log("sys","并无此器图谱。"); return; }
+  if(!G.recipes.qi[key]){ log("sys","你尚未掌握该图谱（三焰扇图谱可在宗门贡献阁兑换）。"); return; }
+  const r = QI_RECIPES[key];
+  if(!canAffordMats(r.mats)){ log("bad","矿料不足，无法开炉。"); return; }
+  consumeMats(r.mats);
+  const rate = Math.min(0.95, r.base + (G.crafting.lv-1)*0.03);
+  G.crafting.exp += Math.round(r.diff*0.5);
+  if(Math.random() < rate){
+    G.crafting.exp += r.diff;
+    if(FQI[key].atk > G.fqiAtk){
+      G.fqi = key; recalcStats();
+      log("treasure","炉火纯青，器成之时霞光万道——【"+r.name+"】出炉！当即祭炼为本命法器。（攻+"+FQI[key].atk+"，炼器术经验 +"+Math.round(r.diff*1.5)+"）");
+    } else {
+      const refund = Math.round(FQI[key].price*0.6);
+      G.stones += refund;
+      log("good","【"+r.name+"】出炉，成色不俗，然比你现有法器稍逊，折价售出得灵石 "+refund+"。（炼器术经验 +"+Math.round(r.diff*1.5)+"）");
+    }
+  } else {
+    log("bad","炉温骤变，矿料尽毁……炼器失败，所幸略有所悟（炼器术经验 +"+Math.round(r.diff*0.5)+"）。");
+  }
+  checkSkillLevel("crafting");
+  render(); save();
+}
+
+/* ---------- 宗门 ---------- */
+function newQuest(){
+  const scale = G.realm + 1;
+  const r = Math.random();
+  if(r < 0.45){
+    const n = rand(2,3) + Math.floor(G.realm/2);
+    return { type:"kill", need:n, prog:0, stones:80*scale, contrib:40*scale, desc:"斩杀妖兽或敌修 ×"+n };
+  } else if(r < 0.8){
+    const pool = [["lingcao"],["lingcao","xuannie"],["xuannie","huanglong"],["huanglong","qiansui"],["qiansui"]][Math.min(4,G.realm)];
+    const h = pick(pool);
+    const n = rand(1,2);
+    return { type:"herb", herb:h, need:n, prog:n, stones:HERBS[h].sell*n + 60*scale, contrib:30*scale, desc:"采集"+HERBS[h].name+" ×"+n+" 上缴宗门" };
+  } else {
+    return { type:"escort", need:1, prog:0, stones:120*scale, contrib:50*scale, desc:"押送物资至邻谷（交任务时结算，可能遇袭）" };
+  }
+}
+function grantQuestReward(q){
+  G.stones += q.stones;
+  if(G.sect) G.sect.contrib += q.contrib;
+  log("good","【宗门任务·完成】"+q.desc+"。奖励：灵石 ×"+q.stones+"，贡献点 +"+q.contrib+"。");
+}
+$("act-sect").onclick = () => {
+  if(!G.sect){
+    if(!(G.realm===0 && G.layer>=5)){ log("sys","修为尚浅（需炼气五层），宗门暂不收录。"); render(); save(); return; }
+    if(confirm("黄枫谷执事见你根骨尚可，愿引你入门。是否拜入【黄枫谷】？\n（此后可接取宗门任务赚取贡献点，在贡献阁兑换丹药、功法与丹方图谱）")){
+      G.sect = { name:"黄枫谷", contrib:0 };
+      log("sys","【入宗】你拜入黄枫谷门下，成为一名记名弟子。完成宗门任务、斩杀敌修皆可积累贡献。");
+    }
+    render(); save(); return;
+  }
+  let lines = ["【"+G.sect.name+"】贡献点："+G.sect.contrib,""];
+  if(G.quest) lines.push("当前任务："+G.quest.desc+"（进度 "+G.quest.prog+"/"+G.quest.need+"）");
+  else lines.push("当前无任务。");
+  lines.push("","输入「接」接取新任务；输入「交」完成任务／领取奖励；");
+  lines.push("输入「兑换 名称」至贡献阁兑换：");
+  lines.push(SECT_SHOP.map(s=>s.name+"("+s.cost+"贡献)").join("、"));
+  const cmd = prompt(lines.join("\n")+"\n\n输入指令（留空取消）：");
+  if(!cmd) return;
+  const c = cmd.trim();
+  if(c==="接"){
+    if(G.quest){ log("sys","已有任务在身，先完成它。"); }
+    else {
+      G.quest = newQuest();
+      log("sys","【宗门任务】"+G.quest.desc+"。（奖励：灵石 "+G.quest.stones+"，贡献 "+G.quest.contrib+"）");
+    }
+  } else if(c==="交"){
+    claimQuest();
+  } else {
+    const m = c.match(/^兑换\s*(\S+)$/);
+    if(m) sectBuy(m[1]); else log("sys","指令示例：接 ／ 交 ／ 兑换 筑基丹");
+  }
+  render(); save();
+};
+function claimQuest(){
+  if(!G.quest){ log("sys","尚无任务，先「接」一个吧。"); return; }
+  const q = G.quest;
+  if(q.type==="kill"){
+    if(q.prog < q.need){ log("sys","任务尚未完成（"+q.prog+"/"+q.need+"），继续历练杀敌吧。"); return; }
+    grantQuestReward(q); G.quest = null;
+  } else if(q.type==="herb"){
+    if((G.herbs[q.herb]||0) < q.need){ log("sys","药材不足（需"+HERBS[q.herb].name+"×"+q.need+"），先去历练采集吧。"); return; }
+    consumeMats({[q.herb]:q.need});
+    grantQuestReward(q); G.quest = null;
+  } else { // escort
+    if(Math.random() < 0.5){
+      grantQuestReward(q); G.quest = null;
+    } else {
+      log("bad","【遇袭】押送途中，一伙劫道修士杀出！");
+      G.pendingEscort = q;
+      const tier = Math.min(4, G.realm);
+      const t = pick(ENEMIES[tier]);
+      const scale = 1.2;
+      startBattle({
+        name:"劫道修士（护送危机）",
+        hp:Math.round(t.hp*scale), atk:Math.round(t.atk*scale), def:Math.round(t.def*scale),
+        stones:t.stones, exp:t.exp, escort:true,
+      });
+      return; // 战斗结束在战斗流程里结算
+    }
+  }
+}
+function sectBuy(name){
+  const s = SECT_SHOP.find(x=>x.name===name);
+  if(!s){ log("sys","贡献阁中无此物。"); return; }
+  if(G.sect.contrib < s.cost){ log("bad","贡献点不足（需 "+s.cost+"）。"); return; }
+  const [kind,key] = s.key.split(":");
+  if(kind==="pill"){
+    G.sect.contrib -= s.cost; G.pills[key]=(G.pills[key]||0)+1;
+    log("good","【贡献阁】以 "+s.cost+" 贡献兑换【"+PILLS[key].name+"】×1。");
+  } else if(kind==="gf"){
+    if(G.gongfa.includes(key)){ log("sys","此功法你已修成，无需兑换。"); return; }
+    G.sect.contrib -= s.cost; G.gongfa.push(key); recalcStats();
+    log("treasure","【贡献阁】以 "+s.cost+" 贡献请下【"+GONGFA[key].name+"】，当即参悟！（属性提升）");
+  } else if(kind==="recipe"){
+    const pool = key==="feijian" ? G.recipes.qi : G.recipes.dan;
+    if(pool[key]){ log("sys","此方你已掌握。"); return; }
+    G.sect.contrib -= s.cost; pool[key]=1;
+    log("treasure","【贡献阁】以 "+s.cost+" 贡献请下【"+s.name+"】，可于"+(key==="feijian"?"炼器坊":"炼丹炉")+"使用。");
+  }
+}
+
+/* ---------- 灵兽袋 · 噬金虫 ---------- */
+function beastExp(n){
+  const b = G.beetle;
+  if(b.king) return;
+  b.exp += n;
+  while(b.lv < 9 && b.exp >= b.lv*60){
+    b.exp -= b.lv*60; b.lv++;
+    log("good","【噬金虫】虫群饱食金铁后蜕皮繁衍，声势更盛——Lv."+b.lv+"！（斗法辅攻 "+b.lv*6+"）");
+  }
+}
+$("act-beast").onclick = () => {
+  if(!G.hasBeastBag || !G.beetle) return;
+  const b = G.beetle;
+  let lines = ["【灵兽袋】噬金虫"+(b.king?"王（进化完成，斗法每回合噬咬 60 点）":"虫群 Lv."+b.lv+"　经验 "+b.exp+"/"+(b.lv*60)),"",
+    "喂食选项（输入）：",
+    "喂 灵石 — 消耗灵石×100，虫群经验 +25",
+    "喂 精铁 — 消耗精铁×5，虫群经验 +40",
+    "喂 玄铁 — 消耗玄铁×1，虫群经验 +60",
+    "进阶 — Lv.9 且消耗金精×3，进化为噬金虫王（辅攻60、历练采药加成）"];
+  const cmd = prompt(lines.join("\n")+"\n\n输入指令（留空取消）：");
+  if(!cmd) return;
+  const c = cmd.trim();
+  const m = c.match(/^喂\s*(\S+)$/);
+  if(m){
+    const what = m[1];
+    if(what==="灵石"){
+      if(G.stones<100){ log("bad","灵石不足。"); }
+      else { G.stones-=100; beastExp(25); log("good","你撒下一把灵石，虫群蜂拥而至，嚼得咯咯作响。（经验 +25）"); }
+    } else if(what==="精铁"){
+      if(matCount("jingtie")<5){ log("bad","精铁不足（需×5）。"); }
+      else { consumeMats({jingtie:5}); beastExp(40); log("good","虫群将五块精铁啃噬一空。（经验 +40）"); }
+    } else if(what==="玄铁"){
+      if(matCount("xuantie")<1){ log("bad","玄铁不足。"); }
+      else { consumeMats({xuantie:1}); beastExp(60); log("good","一块玄铁入袋，虫群沸腾。（经验 +60）"); }
+    } else log("sys","喂食示例：喂 灵石");
+  } else if(c==="进阶"){
+    if(b.king){ log("sys","虫群已是噬金虫王，威能尽展。"); }
+    else if(b.lv<9){ log("sys","需虫群达到 Lv.9 方可进阶（当前 Lv."+b.lv+"）。"); }
+    else if(matCount("jingjing")<3){ log("bad","进阶需金精×3（历练、血色禁地可得）。"); }
+    else {
+      consumeMats({jingjing:3}); b.king = true;
+      log("treasure","【进化】万千噬金虫吞金而鸣，光华流转间，一只通体金红的虫王现世！斗法辅攻大增，历练采药亦有加成。");
+    }
+  } else log("sys","指令示例：喂 灵石 ／ 进阶");
+  render(); save();
+};
+
+/* ---------- 坊市 ---------- */
+$("act-market").onclick = () => {
+  const lines = [];
+  lines.push("───── 购买 ─────");
+  const tier = G.realm;
+  const pillsAvail = ["juqi","huichun","huyuan","zhujidan"];
+  if(tier>=1) pillsAvail.push("ningjin");
+  if(tier>=2) pillsAvail.push("yingbian");
+  if(tier>=3) pillsAvail.push("huashen");
+  pillsAvail.forEach(k=>{
+    lines.push(`💊 ${PILLS[k].name} — ${PILLS[k].price} 灵石 | ${PILLS[k].desc}`);
+  });
+  const fqiAvail = Object.keys(FQI).filter(k=>FQI[k].price>0 && FQI[k].atk>(FQI[G.fqi].atk||0));
+  fqiAvail.forEach(k=>{
+    lines.push(`⚔️ ${FQI[k].name} — ${FQI[k].price} 灵石 | ${FQI[k].desc||""}（攻+${FQI[k].atk}）`);
+  });
+  const gfAvail = Object.keys(GONGFA).filter(k=>GONGFA[k].price>0 && !G.gongfa.includes(k));
+  gfAvail.forEach(k=>{
+    lines.push(`📜 ${GONGFA[k].name} — ${GONGFA[k].price} 灵石 | ${GONGFA[k].desc}`);
+  });
+  lines.push("───── 出售 ─────");
+  for(const k in G.herbs){ if(G.herbs[k]>0) lines.push(`🌿 ${HERBS[k].name} ×${G.herbs[k]} → 各 ${HERBS[k].sell} 灵石`); }
+  for(const k in G.ores){ if(G.ores[k]>0) lines.push(`⛏️ ${ORES[k].name} ×${G.ores[k]} → 各 ${ORES[k].sell} 灵石`); }
+  for(const k in G.pills){ if(G.pills[k]>0 && PILLS[k].sell) lines.push(`💊 ${PILLS[k].name} ×${G.pills[k]} → 各 ${PILLS[k].sell} 灵石`); }
+  lines.push(" ");
+  lines.push("输入指令购买/出售，例如：买 聚气丹 2 ／ 卖 千年灵药 ／ 卖 金雷竹 ／ 买 青元剑诀");
+  const cmd = prompt(lines.join("\n") + "\n\n当前灵石：" + G.stones + "\n请输入指令（留空取消）：");
+  if(!cmd) return;
+  handleMarketCmd(cmd.trim());
+};
+function findPillByName(name){ return Object.keys(PILLS).find(k=>PILLS[k].name===name); }
+function findHerbByName(name){ return Object.keys(HERBS).find(k=>HERBS[k].name===name); }
+function findOreByName(name){ return Object.keys(ORES).find(k=>ORES[k].name===name); }
+function findFqiByName(name){ return Object.keys(FQI).find(k=>FQI[k].name===name); }
+function findGfByName(name){ return Object.keys(GONGFA).find(k=>GONGFA[k].name===name); }
+
+function handleMarketCmd(cmd){
+  const mBuy = cmd.match(/^(买|购买)\s*(\S+)(?:\s+(\d+))?$/);
+  const mSell = cmd.match(/^(卖|出售)\s*(\S+)(?:\s+(\d+))?$/);
+  if(mBuy){
+    const item = mBuy[2], n = Math.max(1, parseInt(mBuy[3]||"1"));
+    let key = findPillByName(item);
+    if(key){
+      const cost = PILLS[key].price*n;
+      if(G.stones < cost){ log("bad","灵石不足，交易作罢。"); }
+      else { G.stones -= cost; G.pills[key]=(G.pills[key]||0)+n; log("good","购得【"+PILLS[key].name+"】×"+n+"，花费 "+cost+" 灵石。"); }
+    } else if((key=findFqiByName(item))){
+      if(FQI[key].atk <= G.fqiAtk){ log("sys","你现有的法器不弱于此件，无需购买。"); }
+      else if(G.stones < FQI[key].price){ log("bad","灵石不足，交易作罢。"); }
+      else { G.stones -= FQI[key].price; G.fqi = key; recalcStats(); log("good","购得法器【"+FQI[key].name+"】，装备完毕！（攻击提升）"); }
+    } else if((key=findGfByName(item))){
+      if(G.gongfa.includes(key)){ log("sys","此功法你已修成。"); }
+      else if(G.stones < GONGFA[key].price){ log("bad","灵石不足，交易作罢。"); }
+      else { G.stones -= GONGFA[key].price; G.gongfa.push(key); recalcStats(); log("treasure","购得功法【"+GONGFA[key].name+"】，当即参悟！（属性提升）"); }
+    } else log("sys","坊市中并无此物。");
+  } else if(mSell){
+    const item = mSell[2], n = Math.max(1, parseInt(mSell[3]||"1"));
+    let key = findHerbByName(item);
+    let pool = G.herbs, price = 0, label = "";
+    if(key){ price = HERBS[key].sell; label = HERBS[key].name; }
+    else if((key=findOreByName(item))){ pool = G.ores; price = ORES[key].sell; label = ORES[key].name; }
+    else if((key=findPillByName(item)) && PILLS[key].sell){ pool = G.pills; price = PILLS[key].sell; label = PILLS[key].name; }
+    if(key){
+      const have = pool[key]||0;
+      if(have<=0){ log("sys","你没有"+label+"。"); }
+      else {
+        const cnt = Math.min(have,n);
+        const gain = price*cnt;
+        pool[key]-=cnt; if(pool[key]<=0) delete pool[key];
+        G.stones += gain;
+        log("good","售出"+label+" ×"+cnt+"，得灵石 "+gain+"。");
+      }
+    } else log("sys","坊市不收此物。");
+  } else {
+    log("sys","指令未能理解。示例：买 聚气丹 2 ／ 卖 千年灵药");
+  }
+  render(); save();
+}
+
+/* ---------- 云端存档 ---------- */
+const CLOUD_CONFIG = {
+  endpoint: "https://fanren-xiuxian-game-53658.app.workbuddy.host",
+  oauthRelayBaseUrl: "https://www.workbuddy.cn/v2/as/genie-baas/oauth",
+  publishableKey: "wbpk_htmJypOLmqOKBnNH4xCnRN_HX2UKPGiqFIjfsm0FyYY8DRohT5CRIry",
+};
+let cloud = null;
+let cloudSession = null;
+let cloudSaveRowId = null;
+let cloudSaveInfo = null; // { updated_at, realm_name }
+let lastCloudSaveTs = 0;
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function fmtTime(iso){
+  try{ return new Date(iso).toLocaleString("zh-CN", {month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit"}); }
+  catch(e){ return iso; }
+}
+async function initCloud(){
+  if(window.WorkBuddyCloud){
+    try{ cloud = WorkBuddyCloud.createWorkBuddyCloud(CLOUD_CONFIG); }
+    catch(e){ cloud = null; }
+  }
+  if(cloud){
+    const url = new URL(location.href);
+    if(url.searchParams.has("code") || url.searchParams.has("error")){
+      const provider = url.searchParams.get("provider");
+      if(provider === "workbuddy" && typeof cloud.auth.handleWorkBuddyCallback === "function"){
+        try{
+          const res = await cloud.auth.handleWorkBuddyCallback.call(cloud.auth);
+          if(res && res.error){ alert("登录失败：" + res.error.message); }
+        }catch(e){ console.warn(e); }
+      }
+      for(const key of ["code","state","provider"]) url.searchParams.delete(key);
+      history.replaceState(null, "", url.pathname + url.search + url.hash);
+    }
+    await cloudCheckSession();
+  }
+  updateCloudUI();
+}
+async function cloudCheckSession(){
+  if(!cloud) return;
+  try{
+    const res = await cloud.auth.getSession();
+    cloudSession = (res && !res.error && res.data) ? res.data : null;
+    if(cloudSession){ await cloudFetchMeta(); }
+    else { cloudSaveRowId = null; cloudSaveInfo = null; }
+  }catch(e){ console.warn(e); }
+}
+async function cloudFetchMeta(){
+  if(!cloud || !cloudSession) return;
+  try{
+    const { data, error } = await cloud.database.from("game_saves")
+      .select("id, realm_name, updated_at")
+      .order("updated_at", { ascending:false })
+      .limit(1);
+    if(!error && data && data.length){
+      cloudSaveRowId = data[0].id;
+      cloudSaveInfo = { updated_at: data[0].updated_at, realm_name: data[0].realm_name };
+    } else if(!error){
+      cloudSaveRowId = null; cloudSaveInfo = null;
+    }
+  }catch(e){ console.warn(e); }
+}
+function updateCloudUI(){
+  const sdkOk = !!cloud;
+  const loggedIn = sdkOk && !!cloudSession;
+  const html = [];
+  if(!sdkOk){
+    html.push("☁️ 云服务未加载（离线模式，进度仅存于本机浏览器）。");
+  } else if(!loggedIn){
+    html.push("☁️ 未登录：进度仅存于本机浏览器。<b>登录后存档自动上传云端，换设备也能继续仙途。</b>");
+  } else {
+    const who = (cloudSession.user && cloudSession.user.name) ? cloudSession.user.name : "无名修士";
+    if(cloudSaveInfo){
+      html.push("☁️ 已登录：<b>"+escapeHtml(who)+"</b>　云端存档：境界 "+escapeHtml(cloudSaveInfo.realm_name||"?")+" · 更新于 "+fmtTime(cloudSaveInfo.updated_at));
+    } else {
+      html.push("☁️ 已登录：<b>"+escapeHtml(who)+"</b>　云端暂无存档，行动后将自动上传。");
+    }
+  }
+  const sc = $("cloud-status-create"), sg = $("cloud-status-game");
+  if(sc) sc.innerHTML = html.join("");
+  if(sg) sg.innerHTML = html.join("");
+  $("btn-login-create").style.display = (sdkOk && !loggedIn) ? "" : "none";
+  $("btn-cloud-restore-create").style.display = (sdkOk && loggedIn && cloudSaveInfo) ? "" : "none";
+  $("btn-cloud-sync").style.display = loggedIn ? "" : "none";
+  $("btn-cloud-restore").style.display = loggedIn ? "" : "none";
+  $("btn-cloud-logout").style.display = loggedIn ? "" : "none";
+}
+async function cloudLogin(){
+  if(!cloud){ alert("云服务未加载，无法登录。"); return; }
+  const back = new URL(location.href);
+  back.pathname = "/";
+  for(const key of ["code","state","provider"]) back.searchParams.delete(key);
+  try{
+    const res = await cloud.auth.signInWithOAuth({ provider:"workbuddy", redirectTo: back.toString() });
+    if(res && res.error){ alert("登录失败：" + res.error.message); return; }
+    if(res && res.data && res.data.url){ location.assign(res.data.url); }
+    else { alert("未获得登录跳转地址，请稍后重试。"); }
+  }catch(e){ alert("登录失败：" + (e.message||e)); }
+}
+async function cloudLogout(){
+  if(cloud){ try{ await cloud.auth.signOut(); }catch(e){} }
+  cloudSession = null; cloudSaveRowId = null; cloudSaveInfo = null;
+  updateCloudUI();
+  log("sys","【云端存档】已退出登录，进度继续保存在本机。");
+}
+function cloudSaveThrottled(){
+  if(!cloud || !cloudSession || !G) return;
+  const now = Date.now();
+  if(now - lastCloudSaveTs < 8000) return;
+  lastCloudSaveTs = now;
+  cloudSave();
+}
+async function cloudSave(){
+  if(!cloud || !cloudSession || !G) return;
+  try{
+    const payload = {
+      save_data: G,
+      realm_name: REALMS[G.realm].name + "·" + REALMS[G.realm].layerFmt(G.layer),
+      owner_name: (cloudSession.user && cloudSession.user.name) ? cloudSession.user.name : null,
+      updated_at: new Date().toISOString(),
+    };
+    let err = null;
+    if(cloudSaveRowId){
+      const res = await cloud.database.from("game_saves").update(payload).eq("id", cloudSaveRowId).select();
+      err = res.error;
+      if(!err && (!res.data || !res.data.length)){ cloudSaveRowId = null; return cloudSave(); }
+    } else {
+      const res = await cloud.database.from("game_saves").insert(payload).select();
+      err = res.error;
+      if(!err && res.data && res.data.length){ cloudSaveRowId = res.data[0].id; }
+    }
+    if(err){
+      log("bad","【云端存档】同步失败：" + err.message + "（本机存档不受影响）");
+      return;
+    }
+    cloudSaveInfo = { updated_at: payload.updated_at, realm_name: payload.realm_name };
+    updateCloudUI();
+  }catch(e){
+    log("bad","【云端存档】同步异常（本机存档不受影响）。");
+  }
+}
+async function cloudRestore(){
+  if(!cloud || !cloudSession){ alert("请先登录后再恢复云端存档。"); return; }
+  try{
+    const { data, error } = await cloud.database.from("game_saves")
+      .select("id, save_data, realm_name, updated_at")
+      .order("updated_at", { ascending:false })
+      .limit(1);
+    if(error){ alert("云端存档读取失败：" + error.message); return; }
+    if(!data || !data.length){ alert("云端暂无存档。"); return; }
+    const remote = data[0];
+    if(!remote.save_data || !remote.save_data.name){ alert("云端存档数据异常。"); return; }
+    if(!confirm("从云端恢复存档将覆盖当前进度。\n云端存档：境界 " + (remote.realm_name||"?") + "，更新于 " + fmtTime(remote.updated_at) + "\n\n确定恢复吗？")) return;
+    cloudSaveRowId = remote.id;
+    G = remote.save_data;
+    G.flags = G.flags || {};
+    G.ores = G.ores || {};
+    recalcStats();
+    if(!(G.hp>0)) G.hp = G.maxhp;
+    if(!(G.mp>0)) G.mp = G.maxmp;
+    $("screen-create").style.display = "none";
+    $("screen-game").style.display = "block";
+    log("sys","【云端存档】已恢复 " + fmtTime(remote.updated_at) + " 的进度（" + escapeHtml(remote.realm_name||"") + "），此后行动将自动同步云端。");
+    render(); save();
+  }catch(e){ alert("恢复失败：" + (e.message||e)); }
+}
+$("btn-login-create").onclick = cloudLogin;
+$("btn-cloud-restore-create").onclick = cloudRestore;
+$("btn-cloud-sync").onclick = ()=>{
+  if(!cloudSession){ alert("请先登录。"); return; }
+  lastCloudSaveTs = 0; cloudSave();
+  log("sys","【云端存档】已请求同步当前进度。");
+};
+$("btn-cloud-restore").onclick = cloudRestore;
+$("btn-cloud-logout").onclick = cloudLogout;
+
+/* ---------- 存档 ---------- */
+function save(){
+  try{ localStorage.setItem("frxx_save", JSON.stringify(G)); }catch(e){}
+  cloudSaveThrottled();
+}
+function load(){
+  try{
+    const s = localStorage.getItem("frxx_save");
+    if(!s){ log("sys","没有找到存档。"); return; }
+    G = JSON.parse(s);
+    // 兼容旧存档：补齐新增字段
+    G.ores = G.ores || {};
+    G.recipes = G.recipes || { dan:{juqi:1,huichun:1,huyuan:1,zhujidan:1}, qi:{wufeng:1,huoyun:1,qingzhu:1} };
+    G.alchemy = G.alchemy || { lv:1, exp:0 };
+    G.crafting = G.crafting || { lv:1, exp:0 };
+    G.flags = G.flags || {};
+    G.quest = G.quest || null;
+    G.pendingEscort = G.pendingEscort || null;
+    G.dungeonRun = G.dungeonRun || null;
+    G.location = G.location || "荒山野岭";
+    recalcStats();
+    $("screen-create").style.display="none";
+    $("screen-game").style.display="block";
+    log("sys","【读取存档】仙途继续。");
+    render();
+  }catch(e){ alert("存档读取失败"); }
+}
+$("btn-save").onclick = ()=>{ save(); log("sys","【存档】进度已保存。"); };
+$("btn-load").onclick = ()=>load();
+$("btn-restart").onclick = ()=>{
+  if(confirm("重开仙途将清空当前存档，确定吗？")){
+    localStorage.removeItem("frxx_save");
+    location.reload();
+  }
+};
+
+/* ---------- 观察四周（历练面板提示用） ---------- */
+function mudLook(){
+  const area = areaOf(), A = MAPNODES[area];
+  log("sys","【"+area+"】"+A.desc);
+  const exits = [];
+  for(const d of ["n","s","e","w"]){ if(A[d]) exits.push(DIRNAME[d]+"——"+A[d]); }
+  log("normal","可去方向："+(exits.join("；")||"（此地为绝路）"));
+}
+
+/* 初始渲染占位 */
+render();
+/* 自动恢复：检测到本机存档则直接继续仙途 */
+if(localStorage.getItem("frxx_save")) load();
+initCloud();
+</script>
+</body>
+</html>
